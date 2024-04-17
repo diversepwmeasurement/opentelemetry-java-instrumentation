@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## Version 2.4.0 (2024-04-17)
+
 ## Version 2.3.0 (2024-04-12)
 
 ### 📈 Enhancements
