@@ -1,58 +1,51 @@
-# This action updates the CloudFoundry java-buildpack release index after each release.
-# See https://github.com/cloudfoundry/java-buildpack/blob/main/docs/extending-repositories.md
-# Prerequisite: the repo must have a branch named "cloudfoundry".
+jobs:
+  update-cloudfoundry-index-yml:
+    runs-on: self-hosted
+    steps:
+    - continue-on-error: true
+      uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633
+    - continue-on-error: true
+      name: Use CLA approved github bot
+      run: .github/scripts/use-cla-approved-github-bot.sh
+    - continue-on-error: true
+      uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633
+      with:
+        ref: cloudfoundry
+    - continue-on-error: true
+      name: create working branch
+      run: git checkout -b opentelemetrybot/cloudfoundry-${{ github.run_number }}-${{
+        github.run_attempt }}
+    - continue-on-error: true
+      run: sudo apt-get install jq python3-pip
+    - continue-on-error: true
+      run: pip install yq
+    - continue-on-error: true
+      name: update index.yml
+      run: 'wget https://repo1.maven.org/maven2/io/opentelemetry/javaagent/opentelemetry-javaagent/maven-metadata.xml
 
+        xq -r .metadata.versioning.versions.version[] maven-metadata.xml | sed -E
+        ''s/(.*)/\1: https:\/\/repo1.maven.org\/maven2\/io\/opentelemetry\/javaagent\/opentelemetry-javaagent\/\1\/opentelemetry-javaagent-\1.jar/''
+        > index.yml
+
+        '
+    - continue-on-error: true
+      name: display changes
+      run: git diff
+    - continue-on-error: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}
+      name: create pr with repo changes
+      run: "git add index.yml\nif git diff-index --quiet --cached HEAD ; then\n  echo\
+        \ \"index.yml already current\"\n  exit 0\nfi\ngit commit -m \"Updated index.yml\"\
+        \ngit push --set-upstream origin opentelemetrybot/cloudfoundry-${{ github.run_number\
+        \ }}-${{ github.run_attempt }}\ngh pr create --base cloudfoundry \\\n  --head\
+        \ opentelemetrybot/cloudfoundry-${{ github.run_number }}-${{ github.run_attempt\
+        \ }} \\\n  --title 'Release updates for Cloudfoundry Repo' \\\n  --body '[Created\
+        \ by Github action]'\n"
 name: Update cloudfoundry release index
 on:
-  schedule:
-    - cron: '25 4 * * *' # Daily at 4:25 AM UTC
-  workflow_dispatch:
-
+  repository_dispatch:
+    types: trigger-ga___release-update-cloudfoundry-index.yml
 permissions:
   contents: write
   pull-requests: write
-
-jobs:
-
-  update-cloudfoundry-index-yml:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
-
-      - name: Use CLA approved github bot
-        run: .github/scripts/use-cla-approved-github-bot.sh
-
-      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
-        with:
-          ref: 'cloudfoundry'
-
-      - name: create working branch
-        run: git checkout -b opentelemetrybot/cloudfoundry-${{ github.run_number }}-${{ github.run_attempt }}
-
-      - run: sudo apt-get install jq python3-pip
-      - run: pip install yq
-
-      - name: update index.yml
-        run: |
-          wget https://repo1.maven.org/maven2/io/opentelemetry/javaagent/opentelemetry-javaagent/maven-metadata.xml
-          xq -r .metadata.versioning.versions.version[] maven-metadata.xml | sed -E 's/(.*)/\1: https:\/\/repo1.maven.org\/maven2\/io\/opentelemetry\/javaagent\/opentelemetry-javaagent\/\1\/opentelemetry-javaagent-\1.jar/' > index.yml
-
-      - name: display changes
-        run: git diff
-
-      - name: create pr with repo changes
-        run: |
-          git add index.yml
-          if git diff-index --quiet --cached HEAD ; then
-            echo "index.yml already current"
-            exit 0
-          fi
-          git commit -m "Updated index.yml"
-          git push --set-upstream origin opentelemetrybot/cloudfoundry-${{ github.run_number }}-${{ github.run_attempt }}
-          gh pr create --base cloudfoundry \
-            --head opentelemetrybot/cloudfoundry-${{ github.run_number }}-${{ github.run_attempt }} \
-            --title 'Release updates for Cloudfoundry Repo' \
-            --body '[Created by Github action]'
-        env:
-          # not using secrets.GITHUB_TOKEN since pull requests from that token do not run workflows
-          GITHUB_TOKEN: ${{ secrets.OPENTELEMETRYBOT_GITHUB_TOKEN }}

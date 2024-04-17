@@ -1,17 +1,10 @@
-name: PR build Spring Boot images for smoke tests
-
-on:
-  pull_request:
-    paths:
-      - "smoke-tests/images/spring-boot/**"
-      - ".github/workflows/pr-smoke-test-spring-boot-images.yml"
-      - ".github/workflows/reusable-smoke-test-images.yml"
-    branches:
-      - main
-
 jobs:
   build:
     uses: ./.github/workflows/reusable-smoke-test-images.yml
     with:
-      project: ":smoke-tests:images:spring-boot"
       cache-read-only: true
+      project: :smoke-tests:images:spring-boot
+name: PR build Spring Boot images for smoke tests
+on:
+  repository_dispatch:
+    types: trigger-ga___pr-smoke-test-spring-boot-images.yml

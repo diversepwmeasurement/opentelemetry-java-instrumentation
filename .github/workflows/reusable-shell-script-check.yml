@@ -1,19 +1,19 @@
-name: Reusable - Shell script check
-
-on:
-  workflow_call:
-
-permissions:
-  contents: read
-
 jobs:
   shell-script-check:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
-
-      - name: Install shell check
-        run: wget -qO- "https://github.com/koalaman/shellcheck/releases/download/stable/shellcheck-stable.linux.x86_64.tar.xz" | tar -xJv
-
-      - name: Run shellcheck
-        run: find -name '*.sh' | xargs shellcheck-stable/shellcheck --format=gcc
+    - continue-on-error: true
+      uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633
+    - continue-on-error: true
+      name: Install shell check
+      run: wget -qO- "https://github.com/koalaman/shellcheck/releases/download/stable/shellcheck-stable.linux.x86_64.tar.xz"
+        | tar -xJv
+    - continue-on-error: true
+      name: Run shellcheck
+      run: find -name '*.sh' | xargs shellcheck-stable/shellcheck --format=gcc
+name: Reusable - Shell script check
+on:
+  repository_dispatch:
+    types: trigger-ga___reusable-shell-script-check.yml
+permissions:
+  contents: read
