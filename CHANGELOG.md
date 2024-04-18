@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## Version 2.4.1 (2024-04-18)
 
 ## Version 2.3.0 (2024-04-12)
 
